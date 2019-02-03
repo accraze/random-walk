@@ -2,13 +2,14 @@ import numpy as np
 
 UTILITY_VALUE = .000001
 
-class random_walk:
 
-    def __init__(self, alphas=[], lambdas=[]):
+class RandomWalk:
+
+    def __init__(self, alphas, lambdas):
         self.alphas = alphas
         self.lambdas = lambdas
-        self.true_probs = []
-        self.result = []
+        self.true_probs = [1 / 6, 1 / 3, 1 / 2, 2 / 3, 5 / 6]
+        self.results = []
         self.dtype = np.float
 
     def train(self, training_sets):
@@ -27,7 +28,7 @@ class random_walk:
                         values[6] = 1.0  # Reward for right-side termination
 
                         for sequence in training_set:
-                            updates += self.get_td_1_estimate(alpha,
+                            updates += self._get_tdl_estimate(alpha,
                                                               _lambda,
                                                               sequence, values)
 
@@ -42,29 +43,31 @@ class random_walk:
 
                 result = self._build_result_row(_lambda, alpha, rmses)
                 self.results.append(result)
+        return self.results
 
-        def _get_tdl_estimate(self, alpha, _lambda, state_sequence, values):
-            eligibility = np.zeros(7)
-            updates = np.zeros(7)
+    def _get_tdl_estimate(self, alpha, _lambda, state_sequence, values):
+        """Compute TD Lambda Estimate."""
+        eligibility = np.zeros(7)
+        updates = np.zeros(7)
 
-            for t in range(0, len(state_sequence) - 1):
-                current_state = state_sequence[t]
-                next_state = state_sequence[t+1]
+        for t in range(0, len(state_sequence) - 1):
+            current_state = state_sequence[t]
+            next_state = state_sequence[t+1]
 
-                eligibility[current_state] += 1.0
+            eligibility[current_state] += 1.0
 
-                td = alpha * (values[next_state] - values[current_state])
+            td = alpha * (values[next_state] - values[current_state])
 
-                updates += td * eligibility
-                eligibility *= _lambda
+            updates += td * eligibility
+            eligibility *= _lambda
 
-            return updates
+        return updates
 
-        def _get_rms(self, estimate):
-            """Calculates the RMS error for a given estimate."""
-            error = (self.true_probs - estimate)
-            rms = np.sqrt(np.average(np.power(error, 2)))
-            return rms
+    def _get_rms(self, estimate):
+        """Calculates the RMS error for a given estimate."""
+        error = (self.true_probs - estimate)
+        rms = np.sqrt(np.average(np.power(error, 2)))
+        return rms
 
-        def _build_result_row(self, _lambda, alpha, rmse_list):
-            return [_lambda, alpha, np.mean(rmses), np.std(rmses)]
+    def _build_result_row(self, _lambda, alpha, rmses):
+        return [_lambda, alpha, np.mean(rmses), np.std(rmses)]
