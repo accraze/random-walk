@@ -12,7 +12,7 @@ class RandomWalk:
         self.results = []
         self.dtype = np.float
 
-    def train(self, training_sets):
+    def train_repeated(self, training_sets):
         for _lambda in self.lambdas:
             for alpha in self.alphas:
                 rmses = []
@@ -43,7 +43,34 @@ class RandomWalk:
 
                 result = self._build_result_row(_lambda, alpha, rmses)
                 self.results.append(result)
+
         return self.results
+
+    def train_single(self, training_sets):
+        results = []
+        for _lambda in self.lambdas:
+            for alpha in self.alphas:
+                rms_vals = []
+                for training_set in training_sets:
+
+                    values = np.array([0.5 for i in range(7)])
+
+                    for sequence in training_set:
+                        values[0] = 0.0
+                        values[6] = 1.0
+                        values += self._get_tdl_estimate(alpha, _lambda,
+                            sequence, values)
+
+                    estimate = np.array(values[1:-1])
+                    error = (self.true_probs - estimate)
+                    rms   = np.sqrt(np.average(np.power(error, 2)))
+
+                    rms_vals.append(rms)
+
+                result = [_lambda, alpha, np.mean(rms_vals), np.std(rms_vals)]
+                results.append(result)
+        return results
+
 
     def _get_tdl_estimate(self, alpha, _lambda, state_sequence, values):
         """Compute TD Lambda Estimate."""
