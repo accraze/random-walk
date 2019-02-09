@@ -1,8 +1,5 @@
 import random
 
-num_train_sets = 100
-num_sequences = 10  # or episodes
-
 
 def generate_training_sets(num_sequences=10, num_train_sets=100):
     """Generate training data. Returns list of sequences."""
